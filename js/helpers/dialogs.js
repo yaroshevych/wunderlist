@@ -307,7 +307,7 @@ dialogs.createDeleteListDialog = function(listId, listElement) {
 		title       : wunderlist.language.data.delete_list_question,
 		buttons     : buttonOptions,
 		open        : function() {
-			$('.ui-dialog-buttonset button:last').focus();
+			$('.ui-dialog-buttonset button:first').focus();
 		}
 	});
 	
