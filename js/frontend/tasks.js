@@ -5,23 +5,61 @@ tasks.focusOutEnabled = true;
 tasks.totalFocusOut   = false;
 tasks.datePickerOpen  = false;
 tasks.dateBeforEdit   = '';
+tasks.addNewTaskToTop = false;
 
 // ADD a new task to the db and frontend
 tasks.add = function() {
 	if ($("input.input-add").val() != '')
 	{
 		// Add Task to List
-		list_id   = $("ul.mainlist").attr("rel");
-		task_name = wunderlist.database.convertString($("input.input-add").val());
+		list_id       = $("ul.mainlist").attr("rel");
+		task_name     = wunderlist.database.convertString($("input.input-add").val());
+		
+		// Tasks default not be important
+		var important = 0;
+		
+		// Check if task should be prio
+		if (task_name.indexOf('*') == 0) {
+			task_name = task_name.substr(1);
+			important = 1;
+		}
+		
+		// Trim whitespace
+		task_name = $.trim(task_name);
+		
+		// Init timestamp & scan for the date
+		var timestamp = 0;
+		var smartDate = wunderlist.smartScanForDate(task_name);
+		
+		// Process the smartDate results
+		if (smartDate.timestamp && smartDate.string) {
+			timestamp	= smartDate.timestamp;
+			task_name	= smartDate.string;
+			/*
+		    var day             = smartDate['day'];
+		    var monthName       = smartDate['month'];
+		    var year            = smartDate['year'];
+		    var smartDateObject = new Date();
+		    var monthNumber     = html.getMonthNumber(monthName);
+		    smartDateObject.setMonth(monthNumber);
+		    smartDateObject.setDate(day);
+		    smartDateObject.setFullYear(year);
+		    timestamp           = html.getWorldWideDate(smartDateObject);
+		    task_name           = smartDate['string'];
+			*/
+		}
 		
 		if (task_name != '')
 		{
-			timestamp = $(".add .showdate").attr('rel');
+		    if (timestamp == 0)
+		    {
+			    timestamp = $(".add .showdate").attr('rel');
+			}
 
 			if (timestamp == undefined)
 				timestamp = 0;
 			
-			important = 0;
+			important = important || 0;
 			
 			if (isNaN(parseInt(list_id)) || $('#left a.active').length == 1)
 			{
@@ -44,26 +82,44 @@ tasks.add = function() {
 			task.important = important;
 			
 			var task_id  = task.insert();	
-			var taskHTML = html.generateTaskHTML(task_id, task_name, list_id, 0, important, timestamp);
 			
+			var taskHTML = html.generateTaskHTML(task_id, task_name, list_id, 0, important, timestamp);
 			
 			if ($("ul.filterlist").length > 0 || $('#left a.active').length == 1)
 			{
 				var ulElement = $('ul#filterlist' + list_id);
 				
 				if (ulElement != undefined && ulElement.is('ul'))
-					ulElement.append(taskHTML);
+					if (tasks.addNewTaskToTop) {
+						ulElement.prepend(taskHTML).find('li:first').hide().fadeIn(225);
+					} else {
+						ulElement.append(taskHTML).find('li:last').hide().fadeIn(225);
+					}
 				else
 				{
 					listHTML  = '<h3 class="clickable cursor" rel="' + list_id + '">' + $('a#list' + list_id + ' b').text() + '</h3>';
 					listHTML += '<ul id="filterlist' + list_id + '" rel="' + ulElement.attr('rel') + '" class="mainlist sortable filterlist">' + taskHTML + '</ul>';
 					
-					$('div#content').append(listHTML);
+					// If adding to inbox in filter view, the inbox should be inserted before any other list
+					var theLists = wunderlist.database.getLists(list_id);
+					if (theLists[0].inbox == 1) {
+						$('div#content .add').after(listHTML);
+					} else {
+						$('div#content').append(listHTML);
+					}
 				}
 			}
 			else
-				$("ul.mainlist").append(taskHTML).find("li:last").hide().fadeIn(225);
+			{
+				// ORDINARY LIST
+				if (tasks.addNewTaskToTop) {
+					$("ul.mainlist").prepend(taskHTML).find("li:first").hide().fadeIn(225);
+				} else {
+					$("ul.mainlist").append(taskHTML).find("li:last").hide().fadeIn(225);
+				}
 				html.createDatepicker();
+			}
+			
 			
 			$("input.input-add").val('');
 			$(".add .showdate").remove();
@@ -76,6 +132,11 @@ tasks.add = function() {
 			makeSortable();
 			filters.updateBadges();
 			html.make_timestamp_to_string();
+			
+			if (tasks.addNewTaskToTop) {
+				task.updatePositions();
+				task.addNewTaskToTop = false;
+			}
 		}
 		else
 			$("input.input-add").val('');
@@ -123,7 +184,7 @@ tasks.cancel = function() {
 /**
  * Delete a task from the list
  *
- * @author Dennis Schneider
+ * @author Dennis Schneider, Daniel Marschner
  */
 tasks.deletes = function(deleteElement) {
 	var liElement = deleteElement.parent();
@@ -156,6 +217,14 @@ $(function() {
 			wunderlist.timer.resume();
 		}
 	});
+	
+	shortcut.add(settings.shortcutkey + '+enter', function (e) {
+		if ( $('div.add input:focus').size() > 0 ) {
+			tasks.addNewTaskToTop = true;
+			tasks.add();
+			tasks.addNewTaskToTop = false;
+		}
+	});
 
 	$("div.add input").live('keydown', 'Esc', function (evt) {
 		if(evt.keyCode == 27) {
@@ -169,34 +238,37 @@ $(function() {
 	
 	// DoubleClick on Task - Edit mode
     $('.mainlist li .description').live('dblclick', function() {
-        var timestampElement = $(this).parent().children('span.timestamp');
-        
-        var doneIsActive = ($('div#left a#done.active').length == 1);
-
-		// Check if edit mode has already been activated
-		if($('#task-edit').length == 0 && doneIsActive == false)
+        var liElement = $(this).parent('li');
+		
+		if (liElement.hasClass('done') == false)
 		{
-			var spanElement = $(this);
-            var liElement   = spanElement.parent();
+			var timestampElement = liElement.children('span.timestamp');
+	        var doneIsActive     = ($('div#left a#done.active').length == 1);
 
-            wunderlist.timer.pause();
+			// Check if edit mode has already been activated
+			if($('#task-edit').length == 0 && doneIsActive == false)
+			{
+				var spanElement = $(this);
+	            var liElement   = spanElement.parent();
 
-			// Get input values
-			titleText = spanElement.text();
-            spanElement.hide();
+	            wunderlist.timer.pause();
 
-			var html_code  = '<input type="text" id="task-edit" value="" />';
+				// Get input values
+				titleText = spanElement.text();
+	            spanElement.hide();
 
-			// Edit the Actual task into an edit task
-			liElement.children(".checkboxcon").after(html_code);
+				var html_code  = '<input type="text" id="task-edit" value="" />';
 
-			$('input#task-edit').val(titleText);
-			$("input#task-edit").select();
+				// Edit the Actual task into an edit task
+				liElement.children(".checkboxcon").after(html_code);
 
-			tasks.totalFocusOut = false;
+				$('input#task-edit').val(titleText);
+				$("input#task-edit").select();
+
+				tasks.totalFocusOut = false;
+			}
 		}
     });
-    
     
     // Initiate The Datepicker when clicking an existing Date
     $('.mainlist li .showdate').live('click', function() {
@@ -253,8 +325,10 @@ $(function() {
 	});
 
 	$(".add input").live('focusout', function () {
-		if($(this).val() == '')
+		if($(this).val() == '') {
+			
 			wunderlist.timer.resume();
+		}
 	});
 	
 	// Do the check or uncheck a task magic
@@ -274,7 +348,7 @@ $(function() {
             if(is_checked)
             {
 				task.done      = 1;
-				task.done_date = html.getWorldWideDate();;	
+				task.done_date = html.getWorldWideDate();	
       		}
       		// If is already checked, append to upper list
             else
@@ -305,9 +379,11 @@ $(function() {
 
     // Make this task important
     $("ul.mainlist span.favina").live("click", function() {
-		if ($('a#done.active').length == 0)
+		var liElement = $(this).parent('li');
+		
+		if ($('a#done.active').length == 0 && liElement.hasClass('done') == false)
 		{
-			task.id        = $(this).parent('li').attr('id');
+			task.id        = liElement.attr('id');
 			task.important = 1;
 			task.updateImportant();
 	        task.update();

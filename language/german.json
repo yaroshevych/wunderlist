@@ -54,6 +54,7 @@
 	"choose_date":			    "Datum auswählen",
 	"no_results":			    "Nichts gefunden",
 	"reset_window_size":	    "Fenstergröße zurücksetzen",
+	"reset_note_window":	    "Notizfenstergröße zurücksetzen",
 	"options":				    "Optionen",
 	"fav":					    "Priorisierung entfernen",
 	"default_task_1":		    "Doppelklick zum bearbeiten",
@@ -224,6 +225,8 @@
 	"shared_delete_all_success":"Alle Benutzer wurden erfolgreich aus der Liste entfernt",
 	"unsynced_data":			"Es gibt Aufgaben und Listen, die nicht übertragen wurden. Bitte versuche erneut zu syncen.",
 	"add_item_method":          "Aufgaben/Listen hinzufügen mit...",
-	"add_item_method_content":	"Wähle dein Tastenkürzel für das hinzufügen von Aufgaben und Listen.",
-	"privacy_policy":			"Datenschutzerklärung"
+	"add_item_method_content":	"Wähle dein Tastenkürzel für das Hinzufügen von Aufgaben und Listen.",
+	"privacy_policy":			"Datenschutzerklärung",
+	"enable_natural_date_recognition": "Smart Date aktivieren",
+	"disable_natural_date_recognition": "Smart Date deaktivieren"
 }

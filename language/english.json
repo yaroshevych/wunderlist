@@ -53,7 +53,8 @@
 	"no_date":				    "No Date",
 	"choose_date":			    "Choose Date",
 	"no_results":			    "No Results",
-	"reset_window_size":	    "Reset Window Size",
+	"reset_window_size":	    "Reset Window",
+	"reset_note_window":	    "Reset Note Window",
 	"options":				    "Options",
 	"fav":					    "No prioritization",
 	"default_task_1":		    "Doubleclick to edit me",
@@ -109,7 +110,7 @@
 	"sign_in":				    "Sign in",
 	"restart":				    "The changes you made require a restart. Please restart Wunderlist manually.",
 	"invitation":			    "Invite your friends",
-	"invitetextarea":			"Hey, I'm managing my tasks with Wunderlist now and it looks pretty cool. It's 100% free, maybe you want to check it out!",
+	"invitetextarea":			"Hey, I'm managing my tasks with Wunderlist now, and it looks pretty cool. It's 100% free. Maybe you want to check it out!",
 	"older_tasks":			    "Show done tasks",
 	"sync_error":			    "An error in the sync process occurred. Please try again.",
 	"login_error":			    "An error in the login process occurred. Please try again.",
@@ -228,5 +229,7 @@
 	"unsynced_data":			"There are tasks and lists which have not been transferred correctly. Please try to sync again.",
 	"add_item_method":          "Task/List creation hotkey",
 	"add_item_method_content":	"Select a hotkey you want to use for creating tasks and lists.",
-	"privacy_policy":           "Privacy Policy"
+	"privacy_policy":           "Privacy Policy",
+	"enable_natural_date_recognition": "Enable Smart Date",
+	"disable_natural_date_recognition": "Disable Smart Date"
 }
